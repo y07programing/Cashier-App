@@ -1,0 +1,13 @@
+{
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "explorer.confirmDelete": false,
+    "workbench.editorAssociations": {
+        "*.zip": "default"
+    },
+    "workbench.editor.empty.hint": "hidden",
+    "diffEditor.maxComputationTime": 0,
+    "editor.smoothScrolling": true,
+    "workbench.iconTheme": "material-icon-theme",
+    "@azure.argTenant": "",
+    "files.autoSave": "afterDelay"
+}
