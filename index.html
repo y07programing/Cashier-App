@@ -1,0 +1,603 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<title>KasirPro - Aplikasi Kasir & Point of Sale</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#129534;</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="light">
+
+<!-- ====================== BOOT / LOADER ====================== -->
+<div id="bootScreen" class="boot-screen">
+  <div class="boot-logo">&#129534;</div>
+  <div class="boot-name">KasirPro</div>
+  <div class="boot-loader"><span></span></div>
+</div>
+
+<!-- ====================== LOGIN ====================== -->
+<div id="loginScreen" class="login-screen hidden">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">&#129534;</div>
+      <h1>KasirPro</h1>
+      <p id="loginStoreName">Point of Sale System</p>
+    </div>
+    <form id="loginForm" autocomplete="off">
+      <label class="field">
+        <span>Nama Pengguna</span>
+        <div class="input-wrap">
+          <span class="input-icon">&#128100;</span>
+          <input type="text" id="loginUsername" placeholder="admin" required>
+        </div>
+      </label>
+      <label class="field">
+        <span>PIN / Password</span>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input type="password" id="loginPin" placeholder="****" required>
+          <button type="button" class="input-action" id="togglePin" title="Tampilkan PIN">&#128065;</button>
+        </div>
+      </label>
+      <div class="login-error" id="loginError"></div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg">Masuk</button>
+    </form>
+    <div class="login-hint">
+      Demo: <b>admin / 1234</b> (Administrator) &nbsp;|&nbsp; <b>kasir / 1111</b> (Kasir)
+    </div>
+  </div>
+</div>
+
+<!-- ====================== APP ====================== -->
+<div id="appShell" class="app-shell hidden">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="brand">
+        <div class="brand-logo">&#129534;</div>
+        <div class="brand-text">
+          <strong>KasirPro</strong>
+          <small id="sideStoreName">Toko Saya</small>
+        </div>
+      </div>
+      <button class="icon-btn sidebar-close" id="btnCloseSidebar">&#10005;</button>
+    </div>
+
+    <nav class="nav" id="mainNav">
+      <div class="nav-group">UTAMA</div>
+      <a class="nav-item active" data-view="pos"><span>&#128722;</span> Kasir / POS</a>
+      <a class="nav-item" data-view="transactions"><span>&#129534;</span> Transaksi</a>
+
+      <div class="nav-group">MASTER DATA</div>
+      <a class="nav-item" data-view="products"><span>&#128230;</span> Produk</a>
+      <a class="nav-item" data-view="categories"><span>&#127991;</span> Kategori</a>
+      <a class="nav-item" data-view="customers"><span>&#128101;</span> Pelanggan</a>
+      <a class="nav-item" data-view="suppliers"><span>&#128666;</span> Supplier</a>
+
+      <div class="nav-group">OPERASIONAL</div>
+      <a class="nav-item" data-view="inventory"><span>&#128229;</span> Stok & Gudang <b class="nav-badge warn" id="badgeStock"></b></a>
+      <a class="nav-item" data-view="debts"><span>&#128179;</span> Piutang / Utang <b class="nav-badge danger" id="badgeDebt"></b></a>
+      <a class="nav-item" data-view="shift"><span>&#128337;</span> Shift & Kas</a>
+
+      <div class="nav-group">LAPORAN</div>
+      <a class="nav-item" data-view="reports"><span>&#128202;</span> Laporan Penjualan</a>
+      <a class="nav-item" data-view="profit"><span>&#128176;</span> Laporan Laba Rugi</a>
+      <a class="nav-item admin-only" data-view="audit"><span>&#128737;</span> Log Aktivitas</a>
+
+      <div class="nav-group">PENGATURAN</div>
+      <a class="nav-item admin-only" data-view="users"><span>&#128272;</span> Pengguna</a>
+      <a class="nav-item admin-only" data-view="settings"><span>&#9881;</span> Pengaturan</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="shift-chip" id="shiftChip" title="Status Shift">
+        <span class="dot"></span><span id="shiftChipText">Shift tutup</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="btnOpenSidebar">&#9776;</button>
+      <div class="topbar-title">
+        <h2 id="viewTitle">Kasir</h2>
+        <span id="viewSubtitle" class="muted"></span>
+      </div>
+      <div class="topbar-right">
+        <div class="clock" id="clockBox">
+          <strong id="clockTime">00:00</strong>
+          <small id="clockDate">-</small>
+        </div>
+        <button class="icon-btn" id="btnFullscreen" title="Layar penuh">&#x26F6;</button>
+        <button class="icon-btn" id="btnTheme" title="Ganti tema">&#127769;</button>
+        <div class="user-menu">
+          <button class="user-btn" id="btnUserMenu">
+            <span class="avatar" id="userAvatar">A</span>
+            <span class="user-meta">
+              <strong id="userName">Admin</strong>
+              <small id="userRole">Administrator</small>
+            </span>
+            <span class="caret">&#9662;</span>
+          </button>
+          <div class="dropdown" id="userDropdown">
+            <a data-action="open-shift">&#128337; Buka / Tutup Shift</a>
+            <a data-action="print-day">&#128424; Cetak Rekap Hari Ini</a>
+            <a data-action="shortcuts">&#9000; Pintasan Keyboard</a>
+            <hr>
+            <a data-action="logout" class="danger-text">&#128682; Keluar</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="view-host" id="viewHost">
+
+      <!-- ===== VIEW: POS ===== -->
+      <section class="view" id="view-pos">
+        <div class="pos-layout">
+          <div class="pos-left">
+            <div class="pos-toolbar">
+              <div class="search-box">
+                <span>&#128269;</span>
+                <input type="text" id="posSearch" placeholder="Cari nama produk / scan barcode (F2)" autocomplete="off">
+                <button class="clear-btn hidden" id="posSearchClear">&#10005;</button>
+              </div>
+              <button class="btn btn-ghost" id="btnBarcodeInfo" title="Fokus pemindai barcode">&#128247; Barcode</button>
+            </div>
+            <div class="chips" id="posCategories"></div>
+            <div class="pos-meta">
+              <span id="posProductCount">0 produk</span>
+              <div class="view-toggle">
+                <button class="vt-btn active" data-grid="1">&#9638;</button>
+                <button class="vt-btn" data-grid="2">&#9646;</button>
+                <button class="vt-btn" data-grid="3">&#9635;</button>
+              </div>
+              <select id="posSort" class="mini-select" title="Urutkan">
+                <option value="name">Nama A-Z</option>
+                <option value="name-desc">Nama Z-A</option>
+                <option value="price-desc">Harga tertinggi</option>
+                <option value="price-asc">Harga terendah</option>
+                <option value="stock-asc">Stok tersedikit</option>
+                <option value="sold">Terlaris</option>
+              </select>
+            </div>
+            <div class="product-grid" id="posProductGrid"></div>
+          </div>
+
+          <div class="pos-right">
+            <div class="cart-head">
+              <div>
+                <h3>Keranjang</h3>
+                <small class="muted" id="cartMeta">0 item</small>
+              </div>
+              <div class="cart-head-actions">
+                <button class="icon-btn sm" id="btnHoldOrder" title="Simpan transaksi sementara (F4)">&#128204;</button>
+                <button class="icon-btn sm" id="btnRecallOrder" title="Buka transaksi tersimpan">&#128194;</button>
+                <button class="icon-btn sm danger" id="btnClearCart" title="Kosongkan keranjang">&#128465;</button>
+              </div>
+            </div>
+
+            <div class="cart-customer" id="cartCustomerBar">
+              <button class="btn btn-ghost btn-block" id="btnPickCustomer">&#128100; Pilih Pelanggan</button>
+            </div>
+
+            <div class="cart-list" id="cartList"></div>
+
+            <div class="cart-bottom">
+              <div class="calc-rows">
+                <div class="calc-row"><span>Subtotal</span><b id="calcSubtotal">Rp 0</b></div>
+                <div class="calc-row" id="rowItemDiscount"><span>Diskon item</span><b id="calcItemDiscount">- Rp 0</b></div>
+                <div class="calc-row clickable" id="rowDiscount" title="Atur diskon transaksi"><span>Diskon transaksi <i>&#9998;</i></span><b id="calcDiscount">- Rp 0</b></div>
+                <div class="calc-row clickable" id="rowServiceFee" title="Atur biaya layanan"><span>Biaya layanan <i>&#9998;</i></span><b id="calcServiceFee">Rp 0</b></div>
+                <div class="calc-row clickable" id="rowTax" title="Atur pajak"><span>Pajak (PPN) <i>&#9998;</i></span><b id="calcTax">Rp 0</b></div>
+                <div class="calc-row clickable" id="rowRounding" title="Atur pembulatan"><span>Pembulatan <i>&#9998;</i></span><b id="calcRounding">Rp 0</b></div>
+                <div class="calc-row total-row">
+                  <span>TOTAL</span><b id="calcTotal">Rp 0</b>
+                </div>
+              </div>
+              <div class="cart-actions">
+                <button class="btn btn-outline" id="btnPayPartial" title="Bayar sebagian / DP">&#129296; DP</button>
+                <button class="btn btn-pay" id="btnPay"><span>BAYAR</span><kbd>F8</kbd></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: TRANSACTIONS ===== -->
+      <section class="view hidden" id="view-transactions">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Riwayat Transaksi</h3>
+            <div class="filter-bar">
+              <div class="search-box sm"><span>&#128269;</span><input type="text" id="txSearch" placeholder="Cari no. struk / nama / produk"></div>
+              <input type="date" id="txFrom" class="mini-select">
+              <input type="date" id="txTo" class="mini-select">
+              <select id="txStatus" class="mini-select">
+                <option value="">Semua status</option>
+                <option value="paid">Selesai</option>
+                <option value="void">Dibatalkan</option>
+                <option value="refund">Retur penuh</option>
+                <option value="partial_refund">Retur sebagian</option>
+                <option value="unpaid">Belum lunas</option>
+              </select>
+              <select id="txPay" class="mini-select">
+                <option value="">Semua metode</option>
+                <option value="cash">Tunai</option>
+                <option value="qris">QRIS</option>
+                <option value="debit">Kartu Debit</option>
+                <option value="credit">Kartu Kredit</option>
+                <option value="transfer">Transfer</option>
+                <option value="ewallet">E-Wallet</option>
+                <option value="tempo">Bayar Tempo</option>
+              </select>
+              <button class="btn btn-ghost" id="txExport">&#11015; Ekspor CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="txTable">
+              <thead><tr>
+                <th>No. Struk</th><th>Waktu</th><th>Kasir</th><th>Pelanggan</th>
+                <th>Item</th><th>Metode</th><th>Status</th><th class="right">Total</th><th class="center">Aksi</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="panel-foot" id="txFoot"></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: PRODUCTS ===== -->
+      <section class="view hidden" id="view-products">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Manajemen Produk</h3>
+            <div class="filter-bar">
+              <div class="search-box sm"><span>&#128269;</span><input type="text" id="prodSearch" placeholder="Cari produk / SKU / barcode"></div>
+              <select id="prodFilterCat" class="mini-select"><option value="">Semua kategori</option></select>
+              <select id="prodFilterStock" class="mini-select">
+                <option value="">Semua stok</option>
+                <option value="low">Stok menipis</option>
+                <option value="out">Stok habis</option>
+              </select>
+              <button class="btn btn-ghost" id="prodExport">&#11015; CSV</button>
+              <button class="btn btn-primary" id="btnAddProduct">+ Produk Baru</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="prodTable">
+              <thead><tr>
+                <th>Kode / Barcode</th><th>Nama Produk</th><th>Kategori</th>
+                <th class="right">Harga</th><th class="right">Modal</th><th class="right">Margin</th>
+                <th class="center">Stok</th><th class="center">Status</th><th class="center">Aksi</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="panel-foot" id="prodFoot"></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: CATEGORIES ===== -->
+      <section class="view hidden" id="view-categories">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><h3>Daftar Kategori</h3><button class="btn btn-primary" id="btnAddCategory">+ Kategori</button></div>
+            <div class="table-wrap"><table class="table" id="catTable">
+              <thead><tr><th>Nama</th><th>Jumlah Produk</th><th class="center">Aksi</th></tr></thead>
+              <tbody></tbody></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Ringkasan Toko</h3></div>
+            <div class="panel-body" id="storeSummary"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: CUSTOMERS ===== -->
+      <section class="view hidden" id="view-customers">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Data Pelanggan</h3>
+            <div class="filter-bar">
+              <div class="search-box sm"><span>&#128269;</span><input type="text" id="custSearch" placeholder="Cari nama / telepon"></div>
+              <button class="btn btn-ghost" id="custExport">&#11015; CSV</button>
+              <button class="btn btn-primary" id="btnAddCustomer">+ Pelanggan Baru</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="custTable">
+            <thead><tr><th>Kode</th><th>Nama</th><th>Kontak</th><th class="center">Transaksi</th>
+            <th class="right">Total Belanja</th><th class="right">Piutang</th><th class="center">Aksi</th></tr></thead>
+            <tbody></tbody></table></div>
+          <div class="panel-foot" id="custFoot"></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: SUPPLIERS ===== -->
+      <section class="view hidden" id="view-suppliers">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Data Supplier</h3>
+            <div class="filter-bar">
+              <div class="search-box sm"><span>&#128269;</span><input type="text" id="supSearch" placeholder="Cari supplier"></div>
+              <button class="btn btn-primary" id="btnAddSupplier">+ Supplier Baru</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="supTable">
+            <thead><tr><th>Kode</th><th>Nama</th><th>Kontak</th><th>Alamat</th><th class="center">Aksi</th></tr></thead>
+            <tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: INVENTORY ===== -->
+      <section class="view hidden" id="view-inventory">
+        <div class="kpi-row" id="invKpi"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Stok & Persediaan</h3>
+            <div class="filter-bar">
+              <div class="search-box sm"><span>&#128269;</span><input type="text" id="invSearch" placeholder="Cari produk"></div>
+              <select id="invFilterStock" class="mini-select">
+                <option value="">Semua</option>
+                <option value="low">Stok menipis</option>
+                <option value="out">Stok habis</option>
+                <option value="in">Stok tersedia</option>
+              </select>
+              <button class="btn btn-ghost" id="btnStockHistory">&#128339; Riwayat Stok</button>
+              <button class="btn btn-ghost" id="btnStockOpname">&#9874; Stock Opname</button>
+              <button class="btn btn-primary" id="btnStockIn">&#128229; Barang Masuk</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="invTable">
+            <thead><tr><th>Produk</th><th>Kategori</th><th class="right">Harga</th>
+            <th class="center">Stok</th><th class="center">Min.</th><th class="right">Nilai Stok</th>
+            <th class="center">Status</th><th class="center">Aksi</th></tr></thead>
+            <tbody></tbody></table></div>
+          <div class="panel-foot" id="invFoot"></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: DEBTS ===== -->
+      <section class="view hidden" id="view-debts">
+        <div class="kpi-row" id="debtKpi"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Piutang / Utang Pelanggan</h3>
+            <div class="filter-bar">
+              <div class="search-box sm"><span>&#128269;</span><input type="text" id="debtSearch" placeholder="Cari pelanggan"></div>
+              <button class="btn btn-ghost" id="debtExport">&#11015; CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="debtTable">
+            <thead><tr><th>Pelanggan</th><th>Kontak</th><th class="right">Total Utang</th>
+            <th class="right">Sudah Dibayar</th><th class="right">Sisa</th><th class="center">Status</th>
+            <th class="center">Aksi</th></tr></thead>
+            <tbody></tbody></table></div>
+          <div class="panel-foot" id="debtFoot"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Riwayat Pembayaran Utang</h3></div>
+          <div class="table-wrap"><table class="table" id="debtPayTable">
+            <thead><tr><th>Tanggal</th><th>Pelanggan</th><th class="right">Jumlah</th><th>Catatan</th><th>Oleh</th></tr></thead>
+            <tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: SHIFT ===== -->
+      <section class="view hidden" id="view-shift">
+        <div class="kpi-row" id="shiftKpi"></div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><h3>Shift Aktif</h3></div>
+            <div class="panel-body" id="shiftActiveBox"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Riwayat Shift</h3></div>
+            <div class="table-wrap"><table class="table" id="shiftTable">
+              <thead><tr><th>Shift</th><th>Kasir</th><th>Buka</th><th>Tutup</th>
+              <th class="right">Setoran</th><th class="right">Selisih</th><th class="center">Status</th></tr></thead>
+              <tbody></tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: REPORTS ===== -->
+      <section class="view hidden" id="view-reports">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Laporan Penjualan</h3>
+            <div class="filter-bar">
+              <select id="rptRange" class="mini-select">
+                <option value="today">Hari Ini</option>
+                <option value="yesterday">Kemarin</option>
+                <option value="week">7 Hari Terakhir</option>
+                <option value="month">30 Hari Terakhir</option>
+                <option value="custom">Rentang Kustom</option>
+              </select>
+              <input type="date" id="rptFrom" class="mini-select hidden">
+              <input type="date" id="rptTo" class="mini-select hidden">
+              <button class="btn btn-ghost" id="rptPrint">&#128424; Cetak</button>
+              <button class="btn btn-primary" id="rptExport">&#11015; Ekspor CSV</button>
+            </div>
+          </div>
+          <div class="kpi-row" id="rptKpi"></div>
+          <div class="grid-2">
+            <div class="subpanel"><h4>Grafik Penjualan Harian</h4><canvas id="chartSales" height="230"></canvas></div>
+            <div class="subpanel"><h4>Penjualan per Jam</h4><canvas id="chartHour" height="230"></canvas></div>
+          </div>
+          <div class="grid-2">
+            <div class="subpanel"><h4>Penjualan per Kategori</h4><canvas id="chartCat" height="230"></canvas></div>
+            <div class="subpanel"><h4>Metode Pembayaran</h4><canvas id="chartPay" height="230"></canvas></div>
+          </div>
+          <div class="grid-2">
+            <div class="subpanel"><h4>10 Produk Terlaris</h4><div class="table-wrap"><table class="table sm" id="rptTopProd"><tbody></tbody></table></div></div>
+            <div class="subpanel"><h4>Penjualan per Kasir</h4><div class="table-wrap"><table class="table sm" id="rptByCashier"><tbody></tbody></table></div></div>
+          </div>
+          <div class="grid-2">
+            <div class="subpanel"><h4>Rekap Transaksi per Tanggal</h4><div class="table-wrap"><table class="table sm" id="rptDaily"><tbody></tbody></table></div></div>
+            <div class="subpanel"><h4>Barang Terlaris (Qty)</h4><div class="table-wrap"><table class="table sm" id="rptTopQty"><tbody></tbody></table></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: PROFIT ===== -->
+      <section class="view hidden" id="view-profit">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Laporan Laba Rugi (Estimasi)</h3>
+            <div class="filter-bar">
+              <select id="prRange" class="mini-select">
+                <option value="today">Hari Ini</option>
+                <option value="week">7 Hari Terakhir</option>
+                <option value="month">30 Hari Terakhir</option>
+                <option value="custom">Rentang Kustom</option>
+              </select>
+              <input type="date" id="prFrom" class="mini-select hidden">
+              <input type="date" id="prTo" class="mini-select hidden">
+              <button class="btn btn-ghost" id="prPrint">&#128424; Cetak</button>
+            </div>
+          </div>
+          <div class="kpi-row" id="prKpi"></div>
+          <div class="grid-2">
+            <div class="subpanel"><h4>Laba per Produk Teratas</h4><canvas id="chartProfit" height="260"></canvas></div>
+            <div class="subpanel"><h4>Komposisi Margin</h4><canvas id="chartMargin" height="260"></canvas></div>
+          </div>
+          <div class="subpanel"><h4>Detail Laba Rugi per Produk</h4><div class="table-wrap"><table class="table sm" id="prTable"><tbody></tbody></table></div></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: AUDIT ===== -->
+      <section class="view hidden" id="view-audit">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Log Aktivitas Pengguna</h3>
+            <div class="filter-bar">
+              <div class="search-box sm"><span>&#128269;</span><input type="text" id="auditSearch" placeholder="Cari aktivitas"></div>
+              <button class="btn btn-ghost danger" id="btnClearAudit">&#128465; Bersihkan Log</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table" id="auditTable">
+            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Entitas</th><th>Detail</th></tr></thead>
+            <tbody></tbody></table></div>
+          <div class="panel-foot" id="auditFoot"></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: USERS ===== -->
+      <section class="view hidden" id="view-users">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Manajemen Pengguna & Peran</h3>
+            <button class="btn btn-primary" id="btnAddUser">+ Pengguna Baru</button>
+          </div>
+          <div class="table-wrap"><table class="table" id="userTable">
+            <thead><tr><th>Nama</th><th>Username</th><th>Peran</th><th>Status</th><th>Dibuat</th><th class="center">Aksi</th></tr></thead>
+            <tbody></tbody></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Matriks Hak Akses</h3></div>
+          <div class="panel-body"><div class="table-wrap"><table class="table sm" id="permTable"></table></div></div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: SETTINGS ===== -->
+      <section class="view hidden" id="view-settings">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><h3>Profil Toko</h3></div>
+            <div class="panel-body">
+              <div class="grid-form">
+                <label class="field"><span>Nama Toko / Outlet</span><input type="text" id="setStoreName"></label>
+                <label class="field"><span>Alamat</span><textarea id="setAddress" rows="2"></textarea></label>
+                <label class="field"><span>Telepon</span><input type="text" id="setPhone"></label>
+                <label class="field"><span>Email</span><input type="text" id="setEmail"></label>
+                <label class="field"><span>NPWP</span><input type="text" id="setNpwp"></label>
+                <label class="field"><span>Footer Struk</span><input type="text" id="setFooter"></label>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Transaksi & Struk</h3></div>
+            <div class="panel-body">
+              <div class="grid-form">
+                <label class="field"><span>Simbol Mata Uang</span><input type="text" id="setCurrency"></label>
+                <label class="field"><span>Ukuran Struk</span>
+                  <select id="setReceiptSize">
+                    <option value="58">58 mm (Struk kecil)</option>
+                    <option value="80">80 mm (Struk standar)</option>
+                    <option value="a4">A4 (Struk besar)</option>
+                  </select>
+                </label>
+                <label class="switch-row"><input type="checkbox" id="setTaxEnabled"><span>Aktifkan Pajak (PPN)</span></label>
+                <label class="field"><span>Tarif Pajak (%)</span><input type="number" id="setTaxRate" step="0.1" min="0"></label>
+                <label class="switch-row"><input type="checkbox" id="setTaxInclusive"><span>Harga sudah termasuk pajak</span></label>
+                <label class="switch-row"><input type="checkbox" id="setServiceFeeEnabled"><span>Aktifkan Biaya Layanan</span></label>
+                <div class="grid-form-2">
+                  <label class="field"><span>Tipe</span><select id="setServiceFeeType"><option value="percent">Persen (%)</option><option value="fixed">Nominal (Rp)</option></select></label>
+                  <label class="field"><span>Nilai</span><input type="number" id="setServiceFeeValue" min="0"></label>
+                </div>
+                <label class="switch-row"><input type="checkbox" id="setAutoPrint"><span>Otomatis cetak struk setelah bayar</span></label>
+                <label class="switch-row"><input type="checkbox" id="setSound"><span>Suara beep saat transaksi selesai</span></label>
+                <label class="switch-row"><input type="checkbox" id="setLockAfterVoid"><span>Kunci aplikasi setelah pembatalan (void)</span></label>
+                <label class="switch-row"><input type="checkbox" id="setMinStockAlert"><span>Tampilkan peringatan stok menipis</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Struk (Pratinjau Langsung)</h3><button class="btn btn-ghost" id="btnTestPrint">&#128424; Cetak Contoh</button></div>
+            <div class="panel-body receipt-preview-box"><div id="receiptPreview"></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Data & Cadangan</h3></div>
+            <div class="panel-body">
+              <p class="muted">Semua data tersimpan di browser (localStorage) perangkat ini. Lakukan pencadangan rutin.</p>
+              <div class="btn-row">
+                <button class="btn btn-primary" id="btnBackup">&#11015; Unduh Backup (JSON)</button>
+                <button class="btn btn-ghost" id="btnRestore">&#11014; Pulihkan Backup</button>
+                <input type="file" id="restoreFile" accept="application/json" class="hidden">
+                <button class="btn btn-ghost" id="btnExportAll">&#128196; Ekspor Semua Transaksi</button>
+                <button class="btn btn-danger" id="btnResetData">&#128465; Reset ke Data Awal</button>
+              </div>
+              <hr>
+              <div class="grid-form-2">
+                <div><strong>Ukuran Database</strong><div class="muted" id="dbSize">-</div></div>
+                <div><strong>Jumlah Produk</strong><div class="muted" id="dbProducts">-</div></div>
+                <div><strong>Jumlah Transaksi</strong><div class="muted" id="dbTx">-</div></div>
+                <div><strong>Versi Aplikasi</strong><div class="muted">KasirPro v1.0.0</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ====================== OVERLAYS ====================== -->
+<div id="modalHost" class="modal-host hidden"></div>
+<div id="drawerHost" class="drawer-host hidden"></div>
+<div id="toastHost" class="toast-host"></div>
+
+<div id="barcodeIndicator" class="barcode-indicator"><span>&#128247; Pemindai aktif - scan produk</span></div>
+
+<script src="utils.js"></script>
+<script src="db.js"></script>
+<script src="auth.js"></script>
+<script src="catalog.js"></script>
+<script src="cart.js"></script>
+<script src="checkout.js"></script>
+<script src="receipt.js"></script>
+<script src="transactions.js"></script>
+<script src="inventory.js"></script>
+<script src="customers.js"></script>
+<script src="shift.js"></script>
+<script src="reports.js"></script>
+<script src="users.js"></script>
+<script src="settings.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
